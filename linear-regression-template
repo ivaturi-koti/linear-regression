@@ -1,0 +1,43 @@
+
+library(caret)
+load data#
+ozone.data <- read.table("ozone.data", header=T)
+str(ozone.data)
+
+## visualize the data
+plot(ozone.data)
+
+#Splitting data using caret
+
+set.seed(324324)
+indexes<-createDataPartition(ozone.data$ozone, times = 1, p=0.75, list=FALSE)
+ozone.train<-ozone.data[indexes,]
+ozone.test<-ozone.data[-indexes,]
+
+## fitting decision model on training set 
+train.control<-trainControl(method="repeatedcv", number = 10, repeats = 3, p=0.75)
+ozone.lm.model.cv<-train(ozone ~., data=ozone.train, method="lm", trControl=train.control)
+summary(ozone.lm.model.cv)
+
+
+## MODEL EVALUATION
+## make prediction using trained model
+ozone.lm.predictions <- predict(ozone.lm.model.cv, ozone.test)
+par(mfrow=c(3,1))
+plot(ozone.test$ozone, ozone.lm.predictions)
+## calculate residuals
+ozone.lm.residuals <- ozone.test$ozone - ozone.lm.predictions
+plot(ozone.test$ozone, ozone.lm.residuals)
+plot(ozone.lm.predictions, ozone.lm.residuals)
+## calculate Root Mean Squared Error (RMSE)
+ozone.lm.rmse <- sqrt(mean(ozone.lm.residuals^2))
+print(ozone.lm.rmse)
+## calculate Mean Absolute Error (MAE)
+ozone.lm.mae <- mean(abs(ozone.lm.residuals))
+print(ozone.lm.mae)
+## R squared (coefficient of determination)
+ozone.ss.tot <- sum((ozone.test$ozone - mean(ozone.test$ozone))^2)
+ozone.lm.ss.res <- sum(ozone.lm.residuals^2)
+ozone.lm.r2 <- 1 - ozone.lm.ss.res / ozone.ss.tot
+print(ozone.lm.r2)
+
